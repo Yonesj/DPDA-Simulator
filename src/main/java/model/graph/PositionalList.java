@@ -1,5 +1,7 @@
 package model.graph;
 
+import java.util.Iterator;
+
 public interface PositionalList<E> {
     /** Returns the number of elements in the list. */
     int size( );
@@ -37,4 +39,5 @@ public interface PositionalList<E> {
     /** Removes the element stored at Position p and returns it (invalidating p). */
     E remove(Position<E> p) throws IllegalArgumentException;
 
+    Iterator<E> iterator( );
 }

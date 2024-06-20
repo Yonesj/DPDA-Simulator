@@ -1,6 +1,7 @@
 package model.graph;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -109,7 +110,12 @@ public class AdjacencyMapGraph<V, E> implements Graph<V, E> {
 
     /** Returns the vertices of the graph as an iterable collection*/
     public Iterable<Vertex<V>> vertices() {
-        return (Iterable<Vertex<V>>) vertices;
+        return new Iterable<Vertex<V>>() {
+            @Override
+            public Iterator<Vertex<V>> iterator() {
+                return vertices.iterator();
+            }
+        };
     }
 
     /** Returns the number of edges of the graph*/
@@ -119,7 +125,12 @@ public class AdjacencyMapGraph<V, E> implements Graph<V, E> {
 
     /** Returns the edges of the graph as an iterable collection*/
     public Iterable<Edge<E>> edges() {
-        return (Iterable<Edge<E>>) edges;
+        return new Iterable<Edge<E>>() {
+            @Override
+            public Iterator<Edge<E>> iterator() {
+                return edges.iterator();
+            }
+        };
     }
 
     /** Returns the number of edges for which vertex v is the origin.*/

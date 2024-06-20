@@ -2,8 +2,6 @@ package view;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.geometry.Insets;
-import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
@@ -12,6 +10,7 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import model.PDA;
+import model.PDAs;
 import model.StateRecord;
 import model.TransitionRecord;
 import model.graph.AdjacencyMapGraph;
@@ -335,9 +334,10 @@ public class AddPdaPanel {
 
     private void backToHomePanel(MouseEvent event) {
         stage.hide();
-        HomePanel homePanel = new HomePanel();
+        HomePanel homePanel = new HomePanel(stage);
         Scene homeScene = new Scene(homePanel.getPanel(), 1280, 720);
         stage.setScene(homeScene);
+        stage.setTitle("home panel");
         stage.show();
     }
 
@@ -349,7 +349,7 @@ public class AddPdaPanel {
         if (initialState == null){
             return;
         }
-        PDA newest = new PDA(graph, initialState, finalStates, "Z");
+        PDAs.addPDA(languageTextField.getText(), new PDA(graph, initialState, finalStates, "Z"));
         backToHomePanel(event);
     }
 }

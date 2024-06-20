@@ -1,24 +1,45 @@
 package view;
 
+import controller.PDAController;
+import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.control.SplitPane;
 import javafx.scene.text.Font;
+import javafx.stage.Stage;
+import model.LanguageRecord;
+import model.PDA;
+import model.PDAs;
+import model.StackRecord;
+
+import java.util.Set;
 
 public class HomePanel {
+    private Stage stage;
+    private PDA pda;
 
-    private TableView<String> languagesTable;
-    private TableView<String> transitionsTable;
-    private TableView<String> stackTable;
+    private TableView<LanguageRecord> languagesTable;
+
+    private AnchorPane rightPane;
     private Label remainingInputTextField;
+    private TableView<StackRecord> stackTable;
+    private TableView<String> transitionsTable;
+    private AnchorPane stackContent;
+
+    private AnchorPane lowerRightPane;
     private Label languageNameTextField;
     private TextField inputTextField;
     private Button submitBtn;
+    private ToolBar toolBar;
 
-    public HomePanel() {
 
+    public HomePanel(Stage stage) {
+        this.stage = stage;
     }
 
     public AnchorPane getPanel() {
@@ -60,6 +81,7 @@ public class HomePanel {
         addLanguageBtn.setLayoutY(53);
         addLanguageBtn.setPrefSize(58, 58);
         AnchorPane.setRightAnchor(addLanguageBtn, 30.6);
+        addLanguageBtn.setOnMouseClicked(this::addLanguage);
 
         ScrollPane leftScrollPane = new ScrollPane();
         leftScrollPane.setLayoutX(26);
@@ -72,18 +94,25 @@ public class HomePanel {
         leftContent.setPrefSize(320, 1000);
         languagesTable = new TableView<>();
         languagesTable.setPrefSize(320, 1000);
-        languagesTable.getColumns().add(new TableColumn<>("language"));
-        languagesTable.getColumns().getFirst().setPrefWidth(320);
+
+        TableColumn<LanguageRecord, String> languageCol = new TableColumn<>("language");
+        languageCol.setCellValueFactory(new PropertyValueFactory<>("languageName"));
+        languagesTable.getColumns().add(languageCol);
+        languageCol.setPrefWidth(320);
         languagesTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        languagesTable.setOnMouseClicked(this::selectLanguage);
+
         AnchorPane.setLeftAnchor(languagesTable, 0.0);
         AnchorPane.setRightAnchor(languagesTable, 0.0);
         leftContent.getChildren().add(languagesTable);
         leftScrollPane.setContent(leftContent);
 
+        fillLanguageTable();
+
         leftPane.getChildren().addAll(dpdasLabel, separator, addLanguageBtn, leftScrollPane);
 
         // Create the right AnchorPane
-        AnchorPane rightPane = new AnchorPane();
+        rightPane = new AnchorPane();
         rightPane.setPrefSize(1238, 907);
 
         SplitPane rightSplitPane = new SplitPane();
@@ -120,12 +149,17 @@ public class HomePanel {
         stackScrollPane.setLayoutY(116);
         stackScrollPane.setPrefSize(158, 338);
 
-        AnchorPane stackContent = new AnchorPane();
+        stackContent = new AnchorPane();
         stackContent.setPrefSize(144, 1000);
+
         stackTable = new TableView<>();
         stackTable.setPrefSize(146, 1000);
-        stackTable.getColumns().add(new TableColumn<>("stack"));
-        stackTable.getColumns().getFirst().setPrefWidth(146);
+        TableColumn<StackRecord, String> stackCol = new TableColumn<>("stack");
+        stackCol.setCellValueFactory(new PropertyValueFactory<>("stackItem"));
+        stackTable.getColumns().add(stackCol);
+        stackCol.setPrefWidth(146);
+
+
         stackContent.getChildren().add(stackTable);
         stackScrollPane.setContent(stackContent);
 
@@ -136,7 +170,7 @@ public class HomePanel {
         remainingInputLabel.setTextFill(javafx.scene.paint.Color.web("#969696"));
         remainingInputLabel.setFont(new Font("SansSerif Regular", 18));
 
-        remainingInputTextField = new Label("Label");
+        remainingInputTextField = new Label("");
         remainingInputTextField.setLayoutX(326);
         remainingInputTextField.setLayoutY(28);
         remainingInputTextField.setPrefSize(506, 54);
@@ -145,7 +179,7 @@ public class HomePanel {
         upperRightPane.getChildren().addAll(transitionsScrollPane, stackScrollPane, remainingInputLabel, remainingInputTextField);
 
         // Lower part of the right split pane
-        AnchorPane lowerRightPane = new AnchorPane();
+        lowerRightPane = new AnchorPane();
         lowerRightPane.setPrefSize(1019, 350);
 
         languageNameTextField = new Label("Label");
@@ -176,7 +210,7 @@ public class HomePanel {
         AnchorPane.setRightAnchor(submitBtn, 38.8);
         AnchorPane.setTopAnchor(submitBtn, 114.0);
 
-        ToolBar toolBar = new ToolBar();
+        toolBar = new ToolBar();
         toolBar.setPrefSize(1019, 26);
         AnchorPane.setTopAnchor(toolBar, 0.0);
         AnchorPane.setLeftAnchor(toolBar, 0.0);
@@ -206,7 +240,49 @@ public class HomePanel {
         // Add left and right panes to the main split pane
         mainSplitPane.getItems().addAll(leftPane, rightPane);
 
+        // hide right panel
+        rightPane.setVisible(false);
+
         root.getChildren().add(mainSplitPane);
         return root;
+    }
+
+    private void fillLanguageTable(){
+        ObservableList<LanguageRecord> items = languagesTable.getItems();
+        Set<String> keys = PDAs.getPDAs().keySet();
+
+        if (keys == null){
+            return;
+        }
+
+        for (String name : keys){
+            items.add(new LanguageRecord(name));
+        }
+    }
+
+    private void addLanguage(MouseEvent event){
+        stage.hide();
+        AddPdaPanel pdaPanel = new AddPdaPanel(stage);
+        stage.setScene(new Scene(pdaPanel.getPanel(), 900, 600));
+        stage.setTitle("PDA panel");
+        stage.show();
+    }
+
+    private void selectLanguage(MouseEvent event){
+        LanguageRecord selectedItem = languagesTable.getSelectionModel().getSelectedItem();
+        if (selectedItem == null){
+            return;
+        }
+        String name = selectedItem.getLanguageName();
+        languageNameTextField.setText(name);
+        this.pda = PDAs.getPDAs().getOrDefault(name, null);
+
+        if (pda == null){
+            return;
+        }
+
+        PDAController.setPDA(pda);
+        stackTable.getItems().add(new StackRecord(pda.getSpecialSymbol()));
+        rightPane.setVisible(true);
     }
 }

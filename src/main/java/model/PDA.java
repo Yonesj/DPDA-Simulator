@@ -52,4 +52,12 @@ public class PDA {
         stack.push(specialSymbol);
         currentState = initialState;
     }
+
+    public Vertex<String> getInitialState(){
+        return initialState;
+    }
+
+    public String getSpecialSymbol() {
+        return specialSymbol;
+    }
 }

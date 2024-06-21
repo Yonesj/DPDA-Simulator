@@ -24,9 +24,9 @@ public class PDA {
         this.stack.push(specialSymbol);
     }
 
-    public boolean readNextInput(char c){
+    public String readNextInput(char c){
         Object[] info = automata.getTransitionInfo(currentState, String.valueOf(c), stack.pop());
-        if (info[1] == null) return false;
+        if (info[1] == null) return null;
 
         currentState = (Vertex<String>)info[1];
         String pushSymbol = info[0].toString();
@@ -37,7 +37,7 @@ public class PDA {
             }
         }
 
-        return true;
+        return pushSymbol;
     }
 
     public boolean isInFinalState(){
@@ -59,5 +59,21 @@ public class PDA {
 
     public String getSpecialSymbol() {
         return specialSymbol;
+    }
+
+    public Vertex<String> getCurrentState() {
+        return currentState;
+    }
+
+    public String getStackTopItem(){
+        return stack.peek();
+    }
+
+    public Set<Vertex<String>> getFinalStates() {
+        return finalStates;
+    }
+
+    public AdjacencyMapGraph<String, String> getAutomata() {
+        return automata;
     }
 }

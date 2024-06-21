@@ -1,12 +1,14 @@
 package model;
 
 import model.graph.AdjacencyMapGraph;
+import model.graph.Edge;
 import model.graph.Vertex;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.File;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -22,8 +24,8 @@ public class PDAs {
         return PDAs;
     }
 
-    private static String readFile(String filePath) throws IOException {
-        File file = new File(filePath);
+    private static String readFile() throws IOException {
+        File file = new File("config.json");
         FileReader fileReader = new FileReader(file, StandardCharsets.UTF_8);
         StringBuilder content = new StringBuilder();
 
@@ -37,7 +39,7 @@ public class PDAs {
     }
 
     public static void configure() throws IOException {
-        JSONObject jsonObject = new JSONObject(readFile("config.json"));
+        JSONObject jsonObject = new JSONObject(readFile());
         JSONArray pdasArray = jsonObject.getJSONArray("PDAs");
 
         String languageName;
@@ -95,5 +97,68 @@ public class PDAs {
 
             addPDA(languageName, new PDA(graph, initialState, finalStates, specialSymbol));
         }
+    }
+
+    private static JSONObject parsePDAs(){
+        JSONObject pdaJson;
+        PDA pda;
+        JSONArray finalStates;
+        JSONArray states;
+        JSONArray transitions;
+        JSONObject automata;
+        JSONObject transition;
+        JSONArray PDAsJson = new JSONArray();
+        JSONObject jsonObject = new JSONObject();
+
+        for (String lang : PDAs.keySet()) {
+            pda = PDAs.get(lang);
+            pdaJson = new JSONObject();
+
+            pdaJson.put("languageName", lang);
+            pdaJson.put("specialSymbol", pda.getSpecialSymbol());
+            pdaJson.put("initialState", pda.getInitialState().getElement());
+
+            finalStates = new JSONArray();
+            for (Vertex<String> state : pda.getFinalStates()) {
+                finalStates.put(state.getElement());
+            }
+            pdaJson.put("finalStates", finalStates);
+
+            automata = new JSONObject();
+
+            states = new JSONArray();
+            for (Vertex<String> state : pda.getAutomata().vertices()){
+                states.put(state.getElement());
+            }
+
+            transitions = new JSONArray();
+            for (Edge<String> edge: pda.getAutomata().edges()){
+                transition = new JSONObject();
+                transition.put("inputSymbol", edge.getInputSymbol());
+                transition.put("popSymbol", edge.getPopSymbol());
+                transition.put("pushSymbol", edge.getPushSymbol());
+                Vertex<String>[] endpoints = pda.getAutomata().endVertices(edge);
+                transition.put("originState", endpoints[0].getElement());
+                transition.put("destination", endpoints[1].getElement());
+
+                transitions.put(transition);
+            }
+
+            automata.put("states", states);
+            automata.put("transitions", transitions);
+            pdaJson.put("automata", automata);
+            PDAsJson.put(pdaJson);
+        }
+
+        return jsonObject.put("PDAs", PDAsJson);
+    }
+
+    public static void saveConfiguration() throws IOException{
+        if (PDAs.isEmpty()) return;
+        JSONObject config = parsePDAs();
+
+        FileWriter file = new FileWriter("config.json");
+        file.write(config.toString(4));
+        file.close();
     }
 }

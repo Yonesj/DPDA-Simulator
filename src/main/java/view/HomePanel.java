@@ -12,23 +12,25 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.control.SplitPane;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
-import model.LanguageRecord;
+import model.Record;
 import model.PDA;
 import model.PDAs;
-import model.StackRecord;
 
 import java.util.Set;
 
 public class HomePanel {
     private Stage stage;
-    private PDA pda;
 
-    private TableView<LanguageRecord> languagesTable;
+    private PDA pda;
+    private String input;
+    private int inputIndex = 0;
+
+    private TableView<Record> languagesTable;
 
     private AnchorPane rightPane;
     private Label remainingInputTextField;
-    private TableView<StackRecord> stackTable;
-    private TableView<String> transitionsTable;
+    private TableView<Record> stackTable;
+    private TableView<Record> transitionsTable;
     private AnchorPane stackContent;
 
     private AnchorPane lowerRightPane;
@@ -36,7 +38,10 @@ public class HomePanel {
     private TextField inputTextField;
     private Button submitBtn;
     private ToolBar toolBar;
-
+    private Button firstStateBtn;
+    private Button nextStateBtn;
+    private Button previousStateBtn;
+    private Button lastStateBtn;
 
     public HomePanel(Stage stage) {
         this.stage = stage;
@@ -95,8 +100,8 @@ public class HomePanel {
         languagesTable = new TableView<>();
         languagesTable.setPrefSize(320, 1000);
 
-        TableColumn<LanguageRecord, String> languageCol = new TableColumn<>("language");
-        languageCol.setCellValueFactory(new PropertyValueFactory<>("languageName"));
+        TableColumn<Record, String> languageCol = new TableColumn<>("language");
+        languageCol.setCellValueFactory(new PropertyValueFactory<>("record"));
         languagesTable.getColumns().add(languageCol);
         languageCol.setPrefWidth(320);
         languagesTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
@@ -138,8 +143,10 @@ public class HomePanel {
         transitionsContent.setPrefSize(492, 994);
         transitionsTable = new TableView<>();
         transitionsTable.setPrefSize(494, 1002);
-        transitionsTable.getColumns().add(new TableColumn<>("transitions"));
-        transitionsTable.getColumns().getFirst().setPrefWidth(494);
+        TableColumn<Record, String> transitionCol = new TableColumn<>("transitions");
+        transitionCol.setCellValueFactory(new PropertyValueFactory<>("record"));
+        transitionsTable.getColumns().add(transitionCol);
+        transitionCol.setPrefWidth(494);
         transitionsContent.getChildren().add(transitionsTable);
         transitionsScrollPane.setContent(transitionsContent);
 
@@ -154,8 +161,8 @@ public class HomePanel {
 
         stackTable = new TableView<>();
         stackTable.setPrefSize(146, 1000);
-        TableColumn<StackRecord, String> stackCol = new TableColumn<>("stack");
-        stackCol.setCellValueFactory(new PropertyValueFactory<>("stackItem"));
+        TableColumn<Record, String> stackCol = new TableColumn<>("stack");
+        stackCol.setCellValueFactory(new PropertyValueFactory<>("record"));
         stackTable.getColumns().add(stackCol);
         stackCol.setPrefWidth(146);
 
@@ -207,6 +214,7 @@ public class HomePanel {
         submitBtn.setPrefSize(146, 46);
         submitBtn.setLayoutX(834);
         submitBtn.setLayoutY(114);
+        submitBtn.setOnMouseClicked(this::submitInput);
         AnchorPane.setRightAnchor(submitBtn, 38.8);
         AnchorPane.setTopAnchor(submitBtn, 114.0);
 
@@ -216,17 +224,21 @@ public class HomePanel {
         AnchorPane.setLeftAnchor(toolBar, 0.0);
         AnchorPane.setRightAnchor(toolBar, 0.0);
 
-        Button firstStateBtn = new Button("<<--");
+        firstStateBtn = new Button("<<--");
         firstStateBtn.setPrefSize(52, 26);
+        firstStateBtn.setOnMouseClicked(this::first);
 
-        Button previousStateBtn = new Button("<--");
+        previousStateBtn = new Button("<--");
         previousStateBtn.setPrefSize(52, 26);
+        previousStateBtn.setOnMouseClicked(this::previous);
 
-        Button nextStateBtn = new Button("-->");
+        nextStateBtn = new Button("-->");
         nextStateBtn.setPrefSize(52, 26);
+        nextStateBtn.setOnMouseClicked(this::next);
 
-        Button lastStateBtn = new Button("-->>");
+        lastStateBtn = new Button("-->>");
         lastStateBtn.setPrefSize(52, 26);
+        lastStateBtn.setOnMouseClicked(this::last);
 
         toolBar.getItems().addAll(firstStateBtn, previousStateBtn, nextStateBtn, lastStateBtn);
         toolBar.setPadding(new Insets(25, 0, 15, 25));
@@ -240,15 +252,19 @@ public class HomePanel {
         // Add left and right panes to the main split pane
         mainSplitPane.getItems().addAll(leftPane, rightPane);
 
-        // hide right panel
+        // configure right panel
         rightPane.setVisible(false);
+        firstStateBtn.setDisable(true);
+        nextStateBtn.setDisable(true);
+        previousStateBtn.setDisable(true);
+        lastStateBtn.setDisable(true);
 
         root.getChildren().add(mainSplitPane);
         return root;
     }
 
     private void fillLanguageTable(){
-        ObservableList<LanguageRecord> items = languagesTable.getItems();
+        ObservableList<Record> items = languagesTable.getItems();
         Set<String> keys = PDAs.getPDAs().keySet();
 
         if (keys == null){
@@ -256,7 +272,7 @@ public class HomePanel {
         }
 
         for (String name : keys){
-            items.add(new LanguageRecord(name));
+            items.add(new Record(name));
         }
     }
 
@@ -269,11 +285,11 @@ public class HomePanel {
     }
 
     private void selectLanguage(MouseEvent event){
-        LanguageRecord selectedItem = languagesTable.getSelectionModel().getSelectedItem();
+        Record selectedItem = languagesTable.getSelectionModel().getSelectedItem();
         if (selectedItem == null){
             return;
         }
-        String name = selectedItem.getLanguageName();
+        String name = selectedItem.getRecord();
         languageNameTextField.setText(name);
         this.pda = PDAs.getPDAs().getOrDefault(name, null);
 
@@ -282,7 +298,70 @@ public class HomePanel {
         }
 
         PDAController.setPDA(pda);
-        stackTable.getItems().add(new StackRecord(pda.getSpecialSymbol()));
+        stackTable.getItems().add(new Record(pda.getSpecialSymbol()));
         rightPane.setVisible(true);
+    }
+
+    private void submitInput(MouseEvent event){
+        input = inputTextField.getText();
+        if (input.isEmpty()){
+            return;
+        }
+        remainingInputTextField.setText(input);
+        nextStateBtn.setDisable(false);
+        lastStateBtn.setDisable(false);
+        submitBtn.setDisable(true);
+    }
+
+    private void next(MouseEvent event){
+        String currentState = pda.getCurrentState().getElement();
+        String popItem = pda.getStackTopItem();
+        char inputItem = input.charAt(inputIndex);
+        String pushItem = pda.readNextInput(inputItem);
+
+        if (pushItem == null) {
+            showResult();
+            return;
+        }
+
+        ObservableList<Record> stackItems = stackTable.getItems();
+        stackItems.removeLast();
+
+        for(char c : pushItem.toCharArray()){
+            stackItems.addLast(new Record(Character.toString(c)));
+        }
+
+        stackTable.setItems(stackItems);
+        transitionsTable.getItems().add(new Record(String.format("T(%s, %c, %s) = {%s, %s}", currentState, inputItem,
+                popItem, pda.getCurrentState().getElement(), pushItem)));
+        inputIndex++;
+        remainingInputTextField.setText(input.substring(inputIndex));
+
+        if (inputIndex == input.length()){
+            showResult();
+        }
+    }
+
+    private void previous(MouseEvent event){}
+
+    private void last(MouseEvent event){
+        while (inputIndex != input.length()){
+            next(event);
+        }
+        showResult();
+    }
+
+    private void first(MouseEvent event){}
+
+    private void showResult(){
+        nextStateBtn.setDisable(true);
+        lastStateBtn.setDisable(true);
+        submitBtn.setDisable(false);
+
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Result");
+        alert.setHeaderText(null);
+        alert.setContentText(String.format("string is %s", pda.isInFinalState() ? "Accepted" : "Rejected"));
+        alert.showAndWait();
     }
 }

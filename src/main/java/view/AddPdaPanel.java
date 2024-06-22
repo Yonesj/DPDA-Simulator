@@ -2,6 +2,7 @@ package view;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.event.Event;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
@@ -9,6 +10,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 import model.PDA;
 import model.PDAs;
 import model.StateRecord;
@@ -17,6 +19,7 @@ import model.graph.AdjacencyMapGraph;
 import model.graph.Edge;
 import model.graph.Vertex;
 
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -54,6 +57,7 @@ public class AddPdaPanel {
         finalStates = new HashSet<>();
         stateRecords = FXCollections.observableArrayList();
         transitionRecords = FXCollections.observableArrayList();
+        stage.setOnCloseRequest(this::savePDAs);
     }
 
     public AnchorPane getPanel() {
@@ -334,6 +338,7 @@ public class AddPdaPanel {
 
     private void backToHomePanel(MouseEvent event) {
         stage.hide();
+        savePDAs(event);
         HomePanel homePanel = new HomePanel(stage);
         Scene homeScene = new Scene(homePanel.getPanel(), 1280, 720);
         stage.setScene(homeScene);
@@ -351,5 +356,13 @@ public class AddPdaPanel {
         }
         PDAs.addPDA(languageTextField.getText(), new PDA(graph, initialState, finalStates, "Z"));
         backToHomePanel(event);
+    }
+
+    private void savePDAs(Event event){
+        try {
+            PDAs.saveConfiguration();
+        }catch (IOException e){
+            showErrorAlert(e.toString());
+        }
     }
 }

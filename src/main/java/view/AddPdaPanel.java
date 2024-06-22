@@ -1,7 +1,6 @@
 package view;
 
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
+import controller.PDAController;
 import javafx.event.Event;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
@@ -10,29 +9,15 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
-import javafx.stage.WindowEvent;
-import model.PDA;
 import model.PDAs;
 import model.StateRecord;
 import model.TransitionRecord;
-import model.graph.AdjacencyMapGraph;
-import model.graph.Edge;
-import model.graph.Vertex;
-
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
+
 
 public class AddPdaPanel {
     private Stage stage;
-
-    private AdjacencyMapGraph<String, String> graph;
-    private Vertex<String> initialState;
-    private Set<Vertex<String>> finalStates;
-
-    private ObservableList<StateRecord> stateRecords;
-    private ObservableList<TransitionRecord> transitionRecords;
+    private PDAController controller;
 
     private TextField languageTextField;
     private TextField stateTextField;
@@ -51,12 +36,7 @@ public class AddPdaPanel {
 
     public AddPdaPanel(Stage stage) {
         this.stage = stage;
-        // Initialize logic components
-        graph = new AdjacencyMapGraph<>(true);
-        initialState = null;
-        finalStates = new HashSet<>();
-        stateRecords = FXCollections.observableArrayList();
-        transitionRecords = FXCollections.observableArrayList();
+        this.controller = new PDAController();
         stage.setOnCloseRequest(this::savePDAs);
     }
 
@@ -234,22 +214,14 @@ public class AddPdaPanel {
 
     private void addState(MouseEvent event) {
         String stateName = stateTextField.getText();
+        boolean isFinal = isFinalCheckBox.isSelected();
         stateTextField.clear();
 
         if (stateName.isBlank()) {
             showErrorAlert("Please enter a valid state");
         } else {
-            Vertex<String> newest = graph.insertVertex(stateName);
-            if (initialState == null) initialState = newest;
-            if (isFinalCheckBox.isSelected()) finalStates.add(newest);
-            addRecordToStatesTable(newest, isFinalCheckBox.isSelected());
+            statesTable.getItems().add(controller.addState(stateName, isFinal));
         }
-    }
-
-    private void addRecordToStatesTable(Vertex<String> state, boolean isFinalState) {
-        StateRecord record = new StateRecord(state.getElement(), isFinalState ? "True" : "False");
-        stateRecords.add(record);
-        statesTable.getItems().add(record);
     }
 
     private void removeState(MouseEvent event){
@@ -257,16 +229,7 @@ public class AddPdaPanel {
             StateRecord selectedRecord = statesTable.getSelectionModel().getSelectedItem();
             if (selectedRecord != null) {
                 statesTable.getItems().remove(selectedRecord);
-                stateRecords.remove(selectedRecord);
-                // Remove from graph
-                for (Vertex<String> v : graph.vertices()){
-                    if (v.getElement().equals(selectedRecord.getStateName())){
-                        graph.removeVertex(v);
-                        break;
-                    }
-                }
-                // Remove from final states if applicable
-                finalStates.removeIf(v -> Objects.equals(v.getElement(), selectedRecord.getStateName()));
+                controller.removeState(selectedRecord.getStateName());
             }
         }
     }
@@ -290,24 +253,11 @@ public class AddPdaPanel {
             return;
         }
 
-        Vertex<String> origin = null;
-        Vertex<String> destination = null;
-
-        for (Vertex<String> v : graph.vertices()) {
-            if (v.getElement().equals(originState)) origin = v;
-            if (v.getElement().equals(destinationState)) destination = v;
+        try {
+            transitionsTable.getItems().add(controller.addTransition(originState, destinationState, inputSymbol, popSymbol, pushSymbol));
+        } catch (IllegalArgumentException e){
+            showErrorAlert(e.getMessage());
         }
-
-        if (origin == null || destination == null) {
-            showErrorAlert("Origin or destination state does not exist");
-            return;
-        }
-
-        graph.insertEdge(origin, destination, inputSymbol, popSymbol, pushSymbol);
-
-        TransitionRecord record = new TransitionRecord(originState, destinationState, inputSymbol, popSymbol, pushSymbol);
-        transitionRecords.add(record);
-        transitionsTable.getItems().add(record);
     }
 
     private void removeTransition(MouseEvent event){
@@ -315,15 +265,8 @@ public class AddPdaPanel {
             TransitionRecord selectedRecord = transitionsTable.getSelectionModel().getSelectedItem();
             if (selectedRecord != null) {
                 transitionsTable.getItems().remove(selectedRecord);
-                transitionRecords.remove(selectedRecord);
-                // Remove from graph
-                for (Edge<String> v : graph.edges()){
-                    if (v.getInputSymbol().equals(selectedRecord.getInputSymbol()) &&
-                    v.getPopSymbol().equals(selectedRecord.getPopSymbol()) && v.getPushSymbol().equals(selectedRecord.getPushSymbol())){
-                        graph.removeEdge(v);
-                        break;
-                    }
-                }
+                controller.removeTransition(selectedRecord.getOriginState(), selectedRecord.getDestinationState(),
+                        selectedRecord.getInputSymbol(), selectedRecord.getPopSymbol(), selectedRecord.getPushSymbol());
             }
         }
     }
@@ -351,10 +294,13 @@ public class AddPdaPanel {
             showErrorAlert("language text field must be filled");
             return;
         }
-        if (initialState == null){
-            return;
+
+        try {
+            controller.addPDA(languageTextField.getText());
+        } catch (IllegalArgumentException e){
+            showErrorAlert(e.getMessage());
         }
-        PDAs.addPDA(languageTextField.getText(), new PDA(graph, initialState, finalStates, "Z"));
+
         backToHomePanel(event);
     }
 

@@ -4,4 +4,5 @@ module com.pda.deterministicpushdownautomata {
 
     exports view;
     exports model;
+    exports app;
 }

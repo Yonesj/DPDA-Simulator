@@ -1,6 +1,5 @@
 package view;
 
-import controller.PDAController;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
@@ -17,19 +16,13 @@ import model.PDA;
 import model.PDAs;
 
 import java.util.Set;
-import java.util.Stack;
 
 public class HomePanel {
     private Stage stage;
 
     private PDA pda;
     private String input;
-    private int inputIndex = 0;
-
-    private Stack<String> previousStack;
-    private Stack<String> nextStack;
-    private Stack<String> previousTransition;
-    private Stack<String> nextTransition;
+    private int inputIndex;
 
     private TableView<Record> languagesTable;
 
@@ -51,10 +44,8 @@ public class HomePanel {
 
     public HomePanel(Stage stage) {
         this.stage = stage;
-        this.previousStack = new Stack<>();
-        this.nextStack = new Stack<>();
-        this.nextTransition = new Stack<>();
-        this.previousTransition = new Stack<>();
+        this.inputIndex = 0;
+        this.input = "";
     }
 
     public AnchorPane getPanel() {
@@ -264,10 +255,6 @@ public class HomePanel {
 
         // configure right panel
         rightPane.setVisible(false);
-        firstStateBtn.setDisable(true);
-        nextStateBtn.setDisable(true);
-//        previousStateBtn.setDisable(true);
-        lastStateBtn.setDisable(true);
 
         root.getChildren().add(mainSplitPane);
         return root;
@@ -277,7 +264,7 @@ public class HomePanel {
         ObservableList<Record> items = languagesTable.getItems();
         Set<String> keys = PDAs.getPDAs().keySet();
 
-        if (keys == null) {
+        if (keys.isEmpty()) {
             return;
         }
 
@@ -300,22 +287,31 @@ public class HomePanel {
             return;
         }
         String name = selectedItem.getRecord();
-        languageNameTextField.setText(name);
         this.pda = PDAs.getPDAs().getOrDefault(name, null);
 
         if (pda == null) {
             return;
         }
 
-        PDAController.setPDA(pda);
-//        previousStack.clear();
-//        nextStack.clear();
-//        previousTransition.clear();
-//        nextTransition.clear();
+        languageNameTextField.setText(name);
+        resetAll();
+
+        firstStateBtn.setDisable(true);
+        nextStateBtn.setDisable(true);
+//        previousStateBtn.setDisable(true);
+        lastStateBtn.setDisable(true);
+        rightPane.setVisible(true);
+    }
+
+    private void resetAll(){
+        if (pda != null) {
+            pda.reset();
+        }
+        inputTextField.setText(input);
+        inputIndex = 0;
         transitionsTable.getItems().clear();
         stackTable.getItems().clear();
         stackTable.getItems().add(new Record(pda.getSpecialSymbol()));
-        rightPane.setVisible(true);
     }
 
     private void submitInput(MouseEvent event) {
@@ -323,27 +319,16 @@ public class HomePanel {
         if (input.isEmpty()) {
             return;
         }
-        selectLanguage(event);
-        remainingInputTextField.setText(input);
+
+        resetAll();
+
         nextStateBtn.setDisable(false);
         lastStateBtn.setDisable(false);
+        firstStateBtn.setDisable(true);
         submitBtn.setDisable(true);
     }
 
     private void next(MouseEvent event) {
-//        if (!nextStack.isEmpty() && !nextTransition.isEmpty()){
-//            String nextTransition = this.nextTransition.pop();
-//            previousTransition.push(nextTransition);
-//            transitionsTable.getItems().add(new Record(nextTransition));
-//
-//            String nextPushItem = nextStack.pop();
-//            previousStack.push(nextPushItem);
-//            if (!nextPushItem.equals("#")) {
-//                for (char c : nextPushItem.substring(1).toCharArray()) {
-//                    stackTable.getItems().add(new Record(Character.toString(c)));
-//                }
-//            }
-//        }
         String currentState = pda.getCurrentState().getElement();
         String popItem = pda.getStackTopItem();
         char inputItem = input.charAt(inputIndex);
@@ -367,10 +352,6 @@ public class HomePanel {
         String newRecord = String.format("T(%s, %c, %s) = {%s, %s}", currentState, inputItem, popItem,
                 pda.getCurrentState().getElement(), pushItem);
         transitionsTable.getItems().add(new Record(newRecord));
-
-//        previousStack.push(pushItem);
-//        previousTransition.push(newRecord);
-
 
         inputIndex++;
         remainingInputTextField.setText(input.substring(inputIndex));
@@ -409,18 +390,7 @@ public class HomePanel {
     }
 
     private void first(MouseEvent event) {
-//        while (!previousTransition.isEmpty()){
-//            nextTransition.push(previousTransition.pop());
-//        }
-//        while (!previousStack.isEmpty()){
-//            nextStack.push(previousStack.pop());
-//        }
-
-        pda.reset();
-        stackTable.getItems().clear();
-        stackTable.getItems().add(new Record(pda.getSpecialSymbol()));
-        transitionsTable.getItems().clear();
-        inputIndex = 0;
+        resetAll();
         remainingInputTextField.setText(input);
 
         firstStateBtn.setDisable(true);
@@ -433,6 +403,8 @@ public class HomePanel {
         nextStateBtn.setDisable(true);
         lastStateBtn.setDisable(true);
         submitBtn.setDisable(false);
+
+        pda.readNextInput('#');
 
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("Result");

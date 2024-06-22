@@ -17,6 +17,7 @@ import model.PDA;
 import model.PDAs;
 
 import java.util.Set;
+import java.util.Stack;
 
 public class HomePanel {
     private Stage stage;
@@ -24,6 +25,11 @@ public class HomePanel {
     private PDA pda;
     private String input;
     private int inputIndex = 0;
+
+    private Stack<String> previousStack;
+    private Stack<String> nextStack;
+    private Stack<String> previousTransition;
+    private Stack<String> nextTransition;
 
     private TableView<Record> languagesTable;
 
@@ -40,11 +46,15 @@ public class HomePanel {
     private ToolBar toolBar;
     private Button firstStateBtn;
     private Button nextStateBtn;
-    private Button previousStateBtn;
+    //    private Button previousStateBtn;
     private Button lastStateBtn;
 
     public HomePanel(Stage stage) {
         this.stage = stage;
+        this.previousStack = new Stack<>();
+        this.nextStack = new Stack<>();
+        this.nextTransition = new Stack<>();
+        this.previousTransition = new Stack<>();
     }
 
     public AnchorPane getPanel() {
@@ -228,9 +238,9 @@ public class HomePanel {
         firstStateBtn.setPrefSize(52, 26);
         firstStateBtn.setOnMouseClicked(this::first);
 
-        previousStateBtn = new Button("<--");
-        previousStateBtn.setPrefSize(52, 26);
-        previousStateBtn.setOnMouseClicked(this::previous);
+//        previousStateBtn = new Button("<--");
+//        previousStateBtn.setPrefSize(52, 26);
+//        previousStateBtn.setOnMouseClicked(this::previous);
 
         nextStateBtn = new Button("-->");
         nextStateBtn.setPrefSize(52, 26);
@@ -240,7 +250,7 @@ public class HomePanel {
         lastStateBtn.setPrefSize(52, 26);
         lastStateBtn.setOnMouseClicked(this::last);
 
-        toolBar.getItems().addAll(firstStateBtn, previousStateBtn, nextStateBtn, lastStateBtn);
+        toolBar.getItems().addAll(firstStateBtn, nextStateBtn, lastStateBtn);
         toolBar.setPadding(new Insets(25, 0, 15, 25));
 
         lowerRightPane.getChildren().addAll(languageNameTextField, inputTextField, submitBtn, toolBar);
@@ -256,27 +266,27 @@ public class HomePanel {
         rightPane.setVisible(false);
         firstStateBtn.setDisable(true);
         nextStateBtn.setDisable(true);
-        previousStateBtn.setDisable(true);
+//        previousStateBtn.setDisable(true);
         lastStateBtn.setDisable(true);
 
         root.getChildren().add(mainSplitPane);
         return root;
     }
 
-    private void fillLanguageTable(){
+    private void fillLanguageTable() {
         ObservableList<Record> items = languagesTable.getItems();
         Set<String> keys = PDAs.getPDAs().keySet();
 
-        if (keys == null){
+        if (keys == null) {
             return;
         }
 
-        for (String name : keys){
+        for (String name : keys) {
             items.add(new Record(name));
         }
     }
 
-    private void addLanguage(MouseEvent event){
+    private void addLanguage(MouseEvent event) {
         stage.hide();
         AddPdaPanel pdaPanel = new AddPdaPanel(stage);
         stage.setScene(new Scene(pdaPanel.getPanel(), 900, 600));
@@ -284,36 +294,56 @@ public class HomePanel {
         stage.show();
     }
 
-    private void selectLanguage(MouseEvent event){
+    private void selectLanguage(MouseEvent event) {
         Record selectedItem = languagesTable.getSelectionModel().getSelectedItem();
-        if (selectedItem == null){
+        if (selectedItem == null) {
             return;
         }
         String name = selectedItem.getRecord();
         languageNameTextField.setText(name);
         this.pda = PDAs.getPDAs().getOrDefault(name, null);
 
-        if (pda == null){
+        if (pda == null) {
             return;
         }
 
         PDAController.setPDA(pda);
+//        previousStack.clear();
+//        nextStack.clear();
+//        previousTransition.clear();
+//        nextTransition.clear();
+        transitionsTable.getItems().clear();
+        stackTable.getItems().clear();
         stackTable.getItems().add(new Record(pda.getSpecialSymbol()));
         rightPane.setVisible(true);
     }
 
-    private void submitInput(MouseEvent event){
+    private void submitInput(MouseEvent event) {
         input = inputTextField.getText();
-        if (input.isEmpty()){
+        if (input.isEmpty()) {
             return;
         }
+        selectLanguage(event);
         remainingInputTextField.setText(input);
         nextStateBtn.setDisable(false);
         lastStateBtn.setDisable(false);
         submitBtn.setDisable(true);
     }
 
-    private void next(MouseEvent event){
+    private void next(MouseEvent event) {
+//        if (!nextStack.isEmpty() && !nextTransition.isEmpty()){
+//            String nextTransition = this.nextTransition.pop();
+//            previousTransition.push(nextTransition);
+//            transitionsTable.getItems().add(new Record(nextTransition));
+//
+//            String nextPushItem = nextStack.pop();
+//            previousStack.push(nextPushItem);
+//            if (!nextPushItem.equals("#")) {
+//                for (char c : nextPushItem.substring(1).toCharArray()) {
+//                    stackTable.getItems().add(new Record(Character.toString(c)));
+//                }
+//            }
+//        }
         String currentState = pda.getCurrentState().getElement();
         String popItem = pda.getStackTopItem();
         char inputItem = input.charAt(inputIndex);
@@ -327,33 +357,79 @@ public class HomePanel {
         ObservableList<Record> stackItems = stackTable.getItems();
         stackItems.removeLast();
 
-        for(char c : pushItem.toCharArray()){
-            stackItems.addLast(new Record(Character.toString(c)));
+        if (!pushItem.equals("#")) {
+            for (char c : pushItem.toCharArray()) {
+                stackItems.addLast(new Record(Character.toString(c)));
+            }
         }
 
         stackTable.setItems(stackItems);
-        transitionsTable.getItems().add(new Record(String.format("T(%s, %c, %s) = {%s, %s}", currentState, inputItem,
-                popItem, pda.getCurrentState().getElement(), pushItem)));
+        String newRecord = String.format("T(%s, %c, %s) = {%s, %s}", currentState, inputItem, popItem,
+                pda.getCurrentState().getElement(), pushItem);
+        transitionsTable.getItems().add(new Record(newRecord));
+
+//        previousStack.push(pushItem);
+//        previousTransition.push(newRecord);
+
+
         inputIndex++;
         remainingInputTextField.setText(input.substring(inputIndex));
 
-        if (inputIndex == input.length()){
+        if (inputIndex == input.length()) {
             showResult();
         }
+
+//        previousStateBtn.setDisable(false);
+        firstStateBtn.setDisable(false);
     }
 
-    private void previous(MouseEvent event){}
+//    private void previous(MouseEvent event){
+//        String previousStackItem = previousStack.pop();
+//        nextStack.push(previousStackItem);
+//        for(int i = 0; i < previousStackItem.length() - 1; i++){
+//            stackTable.getItems().removeLast();
+//        }
+//
+//        nextTransition.push(previousTransition.pop());
+//        transitionsTable.getItems().removeLast();
+//
+//        inputIndex--;
+//        remainingInputTextField.setText(input.substring(inputIndex));
+//
+//        if (inputIndex == 0){
+//            previousStateBtn.setDisable(false);
+//            firstStateBtn.setDisable(false);
+//        }
+//    }
 
-    private void last(MouseEvent event){
-        while (inputIndex != input.length()){
+    private void last(MouseEvent event) {
+        while (inputIndex != input.length()) {
             next(event);
         }
-        showResult();
     }
 
-    private void first(MouseEvent event){}
+    private void first(MouseEvent event) {
+//        while (!previousTransition.isEmpty()){
+//            nextTransition.push(previousTransition.pop());
+//        }
+//        while (!previousStack.isEmpty()){
+//            nextStack.push(previousStack.pop());
+//        }
 
-    private void showResult(){
+        pda.reset();
+        stackTable.getItems().clear();
+        stackTable.getItems().add(new Record(pda.getSpecialSymbol()));
+        transitionsTable.getItems().clear();
+        inputIndex = 0;
+        remainingInputTextField.setText(input);
+
+        firstStateBtn.setDisable(true);
+//        previousStateBtn.setDisable(true);
+        nextStateBtn.setDisable(false);
+        lastStateBtn.setDisable(false);
+    }
+
+    private void showResult() {
         nextStateBtn.setDisable(true);
         lastStateBtn.setDisable(true);
         submitBtn.setDisable(false);

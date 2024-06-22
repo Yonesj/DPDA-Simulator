@@ -187,11 +187,11 @@ public class AdjacencyMapGraph<V, E> implements Graph<V, E> {
 
     public Object[] getTransitionInfo(Vertex<V> origin, E inputSymbol, E popSymbol) {
         InnerVertex<V> originVert = validate(origin);
-        if (outDegree(originVert) == 0) {
-            return null;
-        }
-
         Object[] info = new Object[2];
+
+        if (outDegree(originVert) == 0) {
+            return info;
+        }
 
         for (Edge<E> edge : outgoingEdges(originVert)){
             if (edge.getInputSymbol().equals(inputSymbol) && edge.getPopSymbol().equals(popSymbol)) {

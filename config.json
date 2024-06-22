@@ -1,0 +1,52 @@
+{"PDAs": [
+    {
+        "initialState": "q0",
+        "finalStates": ["q2"],
+        "specialSymbol": "Z",
+        "automata": {
+            "transitions": [
+                {
+                    "popSymbol": "Z",
+                    "inputSymbol": "a",
+                    "pushSymbol": "ZA",
+                    "originState": "q0",
+                    "destination": "q0"
+                },
+                {
+                    "popSymbol": "A",
+                    "inputSymbol": "a",
+                    "pushSymbol": "AA",
+                    "originState": "q0",
+                    "destination": "q0"
+                },
+                {
+                    "popSymbol": "A",
+                    "inputSymbol": "b",
+                    "pushSymbol": "#",
+                    "originState": "q0",
+                    "destination": "q1"
+                },
+                {
+                    "popSymbol": "A",
+                    "inputSymbol": "b",
+                    "pushSymbol": "#",
+                    "originState": "q1",
+                    "destination": "q1"
+                },
+                {
+                    "popSymbol": "Z",
+                    "inputSymbol": "#",
+                    "pushSymbol": "#",
+                    "originState": "q1",
+                    "destination": "q2"
+                }
+            ],
+            "states": [
+                "q0",
+                "q1",
+                "q2"
+            ]
+        },
+        "languageName": "a^n b^n"
+    }
+]}

@@ -17,7 +17,7 @@ public class PDA {
     public PDA(AdjacencyMapGraph<String, String> automata, Vertex<String> initialState, Set<Vertex<String>> finalStates, String specialSymbol) {
         this.automata = automata;
         this.initialState = initialState;
-        this.currentState = initialState;
+        this.currentState = initialState.clone();
         this.finalStates = finalStates;
         this.stack = new Stack<>();
         this.specialSymbol = specialSymbol;
@@ -50,7 +50,7 @@ public class PDA {
     public void reset(){
         stack.clear();
         stack.push(specialSymbol);
-        currentState = initialState;
+        currentState = initialState.clone();
     }
 
     public Vertex<String> getInitialState(){

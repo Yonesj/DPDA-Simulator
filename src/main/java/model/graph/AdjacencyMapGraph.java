@@ -21,6 +21,13 @@ public class AdjacencyMapGraph<V, E> implements Graph<V, E> {
                 incoming = outgoing; // if undirected, alias outgoing map
         }
 
+        private InnerVertex(InnerVertex<V> other){
+            this.element = other.element;
+            this.pos = other.pos;
+            this.incoming = other.incoming;
+            this.outgoing = other.outgoing;
+        }
+
         /** Returns the element associated with the vertex.*/
         public V getElement() {
             return element;
@@ -44,6 +51,10 @@ public class AdjacencyMapGraph<V, E> implements Graph<V, E> {
         /** Returns reference to the underlying map of incoming edges.*/
         public Map<Edge<E>, Vertex<V>> getIncoming() {
             return incoming;
+        }
+
+        public Vertex<V> clone(){
+            return new InnerVertex<>(this);
         }
     } //------------ end of InnerVertex class ------------
 
@@ -197,9 +208,9 @@ public class AdjacencyMapGraph<V, E> implements Graph<V, E> {
     public Vertex<V> opposite(Vertex<V> v, Edge<E> e) throws IllegalArgumentException {
         InnerEdge<E> edge = validate(e);
         Vertex<V>[] endpoints = edge.getEndpoints();
-        if (endpoints[0].equals(v))
+        if (endpoints[0].getElement().equals(v.getElement()))
             return endpoints[1];
-        else if (endpoints[1].equals(v))
+        else if (endpoints[1].getElement().equals(v))
             return endpoints[0];
         else
             throw new IllegalArgumentException("v is not incident to this edge");

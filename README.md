@@ -2,12 +2,23 @@
 
 This is a Java-based tool designed to construct and simulate Deterministic Pushdown Automata (DPDA). This application allows users to visually create DPDAs and verify whether a given string is part of the context-free language recognized by the automaton. This project uses JavaFX for its graphical user interface, offering an intuitive and interactive experience.
 
+<br>
+
 ## Table of Contents
 
+- [Usage](#usage)
 - [Features](#features)
 - [Installation](#installation)
-- [Usage](#usage)
 - [License](#license)
+
+<br>
+
+## Usage
+
+https://github.com/user-attachments/assets/89d72800-ee9b-48a1-9f59-58a4169b9057
+
+
+<br>
 
 ## Features
 
@@ -16,6 +27,8 @@ This is a Java-based tool designed to construct and simulate Deterministic Pushd
 - **String Validation**: Check if a given string is accepted by the constructed DPDA.
 - **Interactive Simulation**: Step-by-step simulation to observe how strings are processed.
 - **Save/Load Automata**: Save your automata for future use or load previously saved DPDAs.
+
+<br>
 
 ## Installation
 
@@ -29,8 +42,8 @@ This is a Java-based tool designed to construct and simulate Deterministic Pushd
 1. **Clone the Repository**:
    ```bash
    git clone https://github.com/Yonesj/DPDA-Simulator.git
-
-IntelliJ IDEA will automatically import the project and download the necessary dependencies. but in case you don't have intelliJ, do following steps:
+   ```
+   IntelliJ IDEA will automatically import the project and download the necessary dependencies. but in case you don't have it:
 
 2. **Navigate to the Project Directory:**
    ```bash
@@ -46,6 +59,8 @@ IntelliJ IDEA will automatically import the project and download the necessary d
    ```bash
   .\mvnw.cmd clean install
    .\mvnw.cmd javafx:run
+
+<br>
 
 ## License
 

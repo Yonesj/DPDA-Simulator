@@ -1,4 +1,4 @@
-# DPDA-Simulator: Deterministic Pushdown Automata Explorer
+# DPDA-Simulator
 
 This is a Java-based tool designed to construct and simulate Deterministic Pushdown Automata (DPDA). This application allows users to visually create DPDAs and verify whether a given string is part of the context-free language recognized by the automaton. This project uses JavaFX for its graphical user interface, offering an intuitive and interactive experience.
 

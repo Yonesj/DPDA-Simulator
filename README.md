@@ -4,17 +4,6 @@ This is a Java-based tool designed to construct and simulate Deterministic Pushd
 
 <br>
 
-## Table of Contents
-
-- [Usage](#usage)
-- [Features](#features)
-- [Installation](#installation)
-- [License](#license)
-
-<br>
-
-## Usage
-
 https://github.com/user-attachments/assets/89d72800-ee9b-48a1-9f59-58a4169b9057
 
 
